@@ -59,7 +59,7 @@ class FieldTable(object):
             MakeCustomWord(addr + 1, self.__processorWordSize)
             typeInfoAddr = GetCustomWord(addr + 1, self.__processorWordSize)
 
-            if ida_bytes.is_loaded(typeInfoAddr):
+            if typeInfoAddr == 0 or ida_bytes.is_loaded(typeInfoAddr):
                 if typeInfoAddr == 0:
                     typeName = "NoType"
                 else:
@@ -107,6 +107,11 @@ class FieldTable(object):
         ida_bytes.set_cmt(
             self.__tableAddr + 2,
             "Class table",
+            0
+        )
+        ida_bytes.set_cmt(
+            self.__tableAddr + 2 + self.__processorWordSize,
+            "Number of fields",
             0
         )
 
