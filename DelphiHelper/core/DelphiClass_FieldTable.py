@@ -43,6 +43,9 @@ class FieldTable(object):
     def __CreateExtendedTableAndExtractData(self, addr: int) -> None:
         MakeWord(addr)
         numOfEntries = Word(addr)
+        MakeName(addr, self.__tableName + "_ExtendedFieldTable")
+        ida_bytes.set_cmt(addr, "Number of records", 0)
+
         addr += 2
 
         for i in range(numOfEntries):
@@ -59,7 +62,7 @@ class FieldTable(object):
             MakeCustomWord(addr + 1, self.__processorWordSize)
             typeInfoAddr = GetCustomWord(addr + 1, self.__processorWordSize)
 
-            if ida_bytes.is_loaded(typeInfoAddr):
+            if typeInfoAddr == 0 or ida_bytes.is_loaded(typeInfoAddr):
                 if typeInfoAddr == 0:
                     typeName = "NoType"
                 else:
