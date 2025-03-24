@@ -7,9 +7,12 @@
 
 
 import ida_bytes
+import ida_name
+import idc
 from DelphiHelper.core.DelphiClass_ClassTable import *
 from DelphiHelper.core.DelphiClass_TypeInfo import *
 from DelphiHelper.util.ida import *
+from typing import Optional
 
 
 class FieldTable(object):
@@ -61,15 +64,9 @@ class FieldTable(object):
 
             MakeCustomWord(addr + 1, self.__processorWordSize)
             typeInfoAddr = GetCustomWord(addr + 1, self.__processorWordSize)
+            typeName = self.__ExtractTypeName(typeInfoAddr)
 
-            if typeInfoAddr == 0 or ida_bytes.is_loaded(typeInfoAddr):
-                if typeInfoAddr == 0:
-                    typeName = "NoType"
-                else:
-                    typeInfo = TypeInfo(typeInfoAddr + self.__processorWordSize)
-                    typeInfo.MakeTable(1)
-                    typeName = typeInfo.GetTypeName()
-
+            if typeName is not None:
                 MakeDword(addr + 1 + self.__processorWordSize)
                 offset = Dword(addr + 1 + self.__processorWordSize)
 
@@ -218,3 +215,23 @@ class FieldTable(object):
                 )
 
                 addr = addr + recordSize
+
+    def __ExtractTypeName(self, addr: int) -> Optional[str]:
+        typeName = None
+
+        if addr == 0:
+            typeName = "NoType"
+        elif ida_bytes.is_loaded(addr):
+            typeInfo = TypeInfo(addr + self.__processorWordSize)
+            typeInfo.MakeTable(1)
+            typeName = typeInfo.GetTypeName()
+        elif idc.get_segm_name(addr) == ".idata" and ida_name.get_name(addr).startswith("@"):
+            typeName = ida_name.get_name(addr)
+            typeName = typeName.split('@')[-1]
+            typeName = typeName.split('$')[-1]
+            typeName = "".join([i for i in typeName if not i.isdigit()])
+
+            if not len(typeName):
+                typeName = None
+
+        return typeName
