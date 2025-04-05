@@ -135,7 +135,7 @@ class KBParser(object):
             firstIndex = 0
 
         if lastIndex == -1:
-            lastIndex = self.__procCount
+            lastIndex = self.__procCount - 1
 
         for i in range(firstIndex, lastIndex + 1, 1):
             procInfo = self.GetProcInfo(i)
