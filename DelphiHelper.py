@@ -15,7 +15,7 @@ from DelphiHelper.core.DelphiClass_TypeInfo import ParseTypeInfo
 from DelphiHelper.core.DFMParser import ParseDFMs
 from DelphiHelper.core.EPFinder import *
 from DelphiHelper.core.FormViewer import FormViewer
-from DelphiHelper.core.IDRKBLoader import *
+from DelphiHelper.core.IDRKBLoader import KBLoader
 from DelphiHelper.core.IDRKBParser import GetDelphiVersion
 from DelphiHelper.util.delphi import LoadDelphiFLIRTSignatures
 from DelphiHelper.util.exception import DelphiHelperError
@@ -150,13 +150,13 @@ class DelphiHelperPluginMain(ida_idaapi.plugmod_t):
 
     def loadIDRKBSignatures_custom(self) -> None:
         try:
-            KBLoader()
+            KBLoader(True)
         except DelphiHelperError as e:
             e.print()
 
     def loadIDRKBSignatures_main(self) -> None:
         try:
-            IDRKBLoader(["SysInit", "System"]).LoadIDRKBSignatures(self.__delphiVersion)
+            KBLoader(False)
         except DelphiHelperError as e:
             e.print()
 

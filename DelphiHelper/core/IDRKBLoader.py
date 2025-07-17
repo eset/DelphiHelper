@@ -21,7 +21,40 @@ from DelphiHelper.util.ida import (
 from PyQt5 import QtGui, QtCore, QtWidgets
 
 
+def KBLoader(custom: bool = False) -> None:
+    KBFile = chooseKBFile()
+    if KBFile is not None:
+        if custom:
+            global _KBLoader
+            try:
+                _KBLoader
+            except Exception:
+                _KBLoader = IDRKBLoaderDialog(KBFile)
+            _KBLoader.Show()
+        else:
+            kbLoader = IDRKBLoader(["SysInit", "System"], KBFile)
+            kbLoader.LoadIDRKBSignatures(GetDelphiVersion())
+
+
+def chooseKBFile() -> str or None:
+    question = "Do you want to choose the IDR KB file manually? (If not, KB autodetection will be performed.)"
+    result = ida_kernwin.ask_yn(ida_kernwin.ASKBTN_NO, question)
+    
+    if result == ida_kernwin.ASKBTN_YES:
+        kbFilePath = ida_kernwin.ask_file(False, "*.*", "Select IDR KB file")
+    elif result == ida_kernwin.ASKBTN_NO:
+        kbFilePath = str()
+    else:
+        kbFilePath = None
+
+    return kbFilePath
+
+
 class IDRKBLoaderDialog(ida_kernwin.PluginForm):
+
+    def __init__(self, KBFile: str) -> None:
+        super(IDRKBLoaderDialog, self).__init__()
+        self.__KBFile = KBFile
 
     def OnCreate(self, form) -> None:
         msg = "NODELAY\nHIDECANCEL\nExtracting list of imported units..."
@@ -30,10 +63,11 @@ class IDRKBLoaderDialog(ida_kernwin.PluginForm):
         ida_kernwin.hide_wait_box()
 
         if len(unitList):
-            ChecklistDialog(
+            checkList = ChecklistDialog(
                 self.__clink__,
                 self.FormToPyQtWidget(form),
-                unitList
+                unitList,
+                self.__KBFile
             )
 
     def OnClose(self, form) -> None:
@@ -49,17 +83,6 @@ class IDRKBLoaderDialog(ida_kernwin.PluginForm):
         )
 
 
-def KBLoader() -> None:
-    global _KBLoader
-
-    try:
-        _KBLoader
-    except Exception:
-        _KBLoader = IDRKBLoaderDialog()
-
-    _KBLoader.Show()
-
-
 class ChecklistDialog(QtWidgets.QDialog):
 
     def __init__(
@@ -67,9 +90,11 @@ class ChecklistDialog(QtWidgets.QDialog):
             clink,
             parent,
             unitList: list[str],
+            KBFile: str,
             checked: bool = True) -> None:
         super(ChecklistDialog, self).__init__(parent)
 
+        self.__KBFile = KBFile
         self.clink = clink
         self.parent = parent
 
@@ -130,7 +155,7 @@ class ChecklistDialog(QtWidgets.QDialog):
 
         try:
             if choices:
-                IDRKBLoader(choices).LoadIDRKBSignatures()
+                IDRKBLoader(choices, self.__KBFile).LoadIDRKBSignatures()
         except DelphiHelperError as e:
             e.print()
 
@@ -150,19 +175,26 @@ class ChecklistDialog(QtWidgets.QDialog):
 
 class IDRKBLoader(object):
 
-    def __init__(self, units: list[str]) -> None:
+    def __init__(
+            self,
+            units: list[str],
+            KBFile: str) -> None:
         self.__unitList = units
+        self.__KBFile = KBFile
 
     def LoadIDRKBSignatures(self, delphiVersion: int = 0) -> None:
-        if delphiVersion == 0:
-            ida_kernwin.show_wait_box("NODELAY\nHIDECANCEL\nTrying to determine Delphi version...")
-            delphiVersion = GetDelphiVersion()
-            ida_kernwin.hide_wait_box()
+        if self.__KBFile == str():
+            if delphiVersion == 0:
+                ida_kernwin.show_wait_box("NODELAY\nHIDECANCEL\nTrying to determine Delphi version...")
+                delphiVersion = GetDelphiVersion()
+                ida_kernwin.hide_wait_box()
 
-        if delphiVersion == -1:
-            delphiVersion = 2014
+            if delphiVersion == -1:
+                delphiVersion = 2014
 
-        self.__loadSignatures(self.__getKBFilePath(delphiVersion), self.__unitList)
+            self.__KBFile = self.__getKBFilePath(delphiVersion)
+
+        self.__loadSignatures(self.__KBFile, self.__unitList)
 
     def __isDifferentFunctionName(
             self,
@@ -212,7 +244,7 @@ class IDRKBLoader(object):
                 if origFunctionName.startswith("sub_") or \
                    origFunctionName.startswith("unknown_"):
                     print(
-                        f"[INFO] Renaming: {origFunctionName} -> {functionName} ({funcAddr:X})"
+                        f"[INFO] Renaming: {origFunctionName} -> {functionName} (0x{funcAddr:X})"
                     )
                     MakeName(funcAddr, functionName)
                 else:
