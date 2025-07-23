@@ -388,7 +388,7 @@ def getDelphiVersion32() -> int:
             return 2010
 
         print("[INFO] Delphi version: UNKNOWN")
-        return 2014
+        return -1
 
     print("[INFO] Delphi version: <= 2009")
     return 2009

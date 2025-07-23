@@ -1,7 +1,7 @@
 #
 # This module allows to parse Delphi's ClassTable
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -14,11 +14,16 @@ from DelphiHelper.util.ida import *
 
 class ClassTable(object):
 
-    def __init__(self, addr: int, tableName: str) -> None:
+    def __init__(
+            self,
+            addr: int,
+            tableName: str,
+            delphiVersion: int) -> None:
         self.__tableAddr = addr
         self.__tableName = tableName
         self.__tableEntries = list()
         self.__processorWordSize = GetProcessorWordSize()
+        self.__delphiVersion = delphiVersion
 
         if self.__tableAddr != 0:
             self.__numOfEntries = Word(self.__tableAddr)
@@ -49,7 +54,11 @@ class ClassTable(object):
                ida_name.get_name(vmtStructAddr)[:4] != "VMT_":
                 from DelphiHelper.core.DelphiClass import DelphiClass
                 try:
-                    DelphiClass(vmtStructAddr).MakeClass()
+                    delphiClass = DelphiClass(
+                        vmtStructAddr,
+                        self.__delphiVersion
+                    )
+                    delphiClass.MakeClass()
                 except DelphiHelperError as e:
                     e.print()
 

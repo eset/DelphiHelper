@@ -1,7 +1,7 @@
 #
 # This module allows to parse and extract data from Delphi's InitTable
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -15,12 +15,14 @@ class InitTable(object):
 
     def __init__(
             self,
+            delphiVersion: int,
             classInfo: dict[str, str | dict[str, int]],
             fieldEnum: FieldEnum) -> None:
         self.__tableAddr = classInfo["Address"]["InitTable"]
         self.__fieldEnum = fieldEnum
         self.__tableName = classInfo["Name"]
         self.__processorWordSize = GetProcessorWordSize()
+        self.__delphiVersion = delphiVersion
 
         if self.__tableAddr != 0:
             self.__fieldCount = Word(self.__tableAddr + 6)
@@ -79,7 +81,10 @@ class InitTable(object):
 
                 if ida_bytes.is_loaded(typeInfoAddr) and \
                    typeInfoAddr != 0:
-                    typeInfo = TypeInfo(typeInfoAddr + self.__processorWordSize)
+                    typeInfo = TypeInfo(
+                        self.__delphiVersion,
+                        typeInfoAddr + self.__processorWordSize
+                    )
                     typeInfo.MakeTable(1)
                     fieldType = typeInfo.GetTypeName()
                     fieldValue = Word(addr + 2 + self.__processorWordSize)

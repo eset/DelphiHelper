@@ -2,7 +2,7 @@
 # This module implements DelphiObject and DelphiProperty classes storing data
 # extracted from Delphi's DFM
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 

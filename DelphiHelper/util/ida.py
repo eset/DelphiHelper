@@ -1,7 +1,7 @@
 #
 # This module implements simple IDA utilities
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -185,7 +185,7 @@ def FindRef_Qword(
 
 def FixName(name: str) -> str:
     name = "".join(i for i in name if ord(i) < 128)
-    for elem in [".", "<", ">", ":", ",", "%"]:
+    for elem in [".", "<", ">", ":", ",", "%", "&", "{", "}"]:
         if elem in name:
             name = name.replace(elem, "_")
     return name

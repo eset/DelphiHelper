@@ -1,7 +1,7 @@
 #
 # This module implements utilities for working with Delphi binaries
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -216,3 +216,27 @@ def ParseMangledFunctionName(mang_func_name: str) -> str:
             used_keywords.append(name)
 
     return new_function_name
+
+
+def GetParamRegister(index: int) -> str:
+    procWordSize = GetProcessorWordSize()
+    regStr = str()
+
+    if procWordSize == 4:
+        if index == 0:
+            regStr = "@<eax>"
+        elif index == 1:
+            regStr = "@<edx>"
+        elif index == 2:
+            regStr = "@<ecx>"
+    else:
+        if index == 0:
+            regStr = "@<rcx>"
+        elif index == 1:
+            regStr = "@<rdx>"
+        elif index == 2:
+            regStr = "@<r8>"
+        elif index == 3:
+            regStr = "@<r9>"
+
+    return regStr

@@ -1,7 +1,7 @@
 #
 # This module allows to parse and extract data from Delphi's VMTTable
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 

@@ -1,7 +1,7 @@
 #
 # This module allows to parse Delphi's MethodTable
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -9,16 +9,21 @@ import ida_bytes
 import ida_name
 import idc
 from DelphiHelper.core.DelphiClass_TypeInfo import *
+from DelphiHelper.util.delphi import GetParamRegister
 from DelphiHelper.util.ida import *
 
 
 class MethodTable(object):
 
-    def __init__(self, classInfo: dict[str, str | dict[str, int]]) -> None:
+    def __init__(
+            self,
+            delphiVersion: int,
+            classInfo: dict[str, str | dict[str, int]]) -> None:
         self.__tableAddr = classInfo["Address"]["MethodTable"]
         self.__tableName = classInfo["Name"]
         self.__classInfo = classInfo
         self.__processorWordSize = GetProcessorWordSize()
+        self.__delphiVersion = delphiVersion
 
     def GetTableAddress(self) -> int:
         return self.__tableAddr
@@ -146,24 +151,7 @@ class MethodTable(object):
                 numOfParams += 1
 
             for i in range(numOfParams):
-                regStr = str()
-
-                if self.__processorWordSize == 4:
-                    if i == 0:
-                        regStr = "@<eax>"
-                    elif i == 1:
-                        regStr = "@<edx>"
-                    elif i == 2:
-                        regStr = "@<ecx>"
-                else:
-                    if i == 0:
-                        regStr = "@<rcx>"
-                    elif i == 1:
-                        regStr = "@<rdx>"
-                    elif i == 2:
-                        regStr = "@<r8>"
-                    elif i == 3:
-                        regStr = "@<r9>"
+                regStr = GetParamRegister(i)
 
                 if i == 1 and funcBaseName == "Create":
                     funcPrototype += "void* ShortInt_Alloc" + regStr
@@ -187,7 +175,10 @@ class MethodTable(object):
                         typeName = "NoType"
                     elif ida_bytes.is_mapped(argTypeInfo) and ida_bytes.is_loaded(argTypeInfo):
                         typeInfoAddr = argTypeInfo + self.__processorWordSize
-                        typeInfo = TypeInfo(typeInfoAddr)
+                        typeInfo = TypeInfo(
+                            self.__delphiVersion,
+                            typeInfoAddr
+                        )
                         typeInfo.MakeTable(1)
                         typeName = typeInfo.GetTypeName()
                     else:
@@ -218,16 +209,13 @@ class MethodTable(object):
         nameAddr = GetCustomWord(funcNameAddr, self.__processorWordSize)
         name = ida_name.get_name(nameAddr)
 
-        if self.__tableName not in name:
-            MakeName(
-                GetCustomWord(funcNameAddr, self.__processorWordSize),
-                self.__tableName + "_" + funcBaseName
-            )
+        if Byte(nameAddr) == 0:
+            MakeName(nameAddr, "sub_nullsub")
+        else:
+            if self.__tableName not in name:
+                MakeName(nameAddr, self.__tableName + "_" + funcBaseName)
 
-        idc.SetType(
-            GetCustomWord(funcNameAddr, self.__processorWordSize),
-            funcPrototype
-        )
+            idc.SetType(nameAddr, funcPrototype)
 
     def __DeleteTable(self) -> None:
         ida_bytes.del_items(self.__tableAddr, ida_bytes.DELIT_DELNAMES, 2)

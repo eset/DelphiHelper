@@ -1,7 +1,7 @@
 #
 # This module implements simple heuristic for searching for EP functions
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -21,6 +21,9 @@ from DelphiHelper.util.ida import *
 
 class EPFinder(object):
 
+    def __init__(self, delphiVersion: int) -> None:
+        self.__delphiVersion = delphiVersion
+
     def FindEPFunction(self) -> None:
         createFormRef = dict()
         initExeRef = list()
@@ -31,7 +34,7 @@ class EPFinder(object):
         classAddr = GetApplicationClassAddr()
 
         if classAddr != ida_idaapi.BADADDR:
-            ResolveApplicationClass(classAddr)
+            ResolveApplicationClass(self.__delphiVersion, classAddr)
             # CreateForm
             createFormStrAddr = find_bytes("0A 43 72 65 61 74 65 46 6F 72 6D")
 
@@ -99,7 +102,10 @@ class EPFinder(object):
                idc.get_operand_type(addr, 1) == 0x2:
                 addr = idc.get_operand_value(addr, 1)
                 try:
-                    delphiClass = DelphiClass(addr)
+                    delphiClass = DelphiClass(
+                        addr,
+                        self.__delphiVersion
+                    )
                     if not ida_name.get_name(addr).startswith("VMT_"):
                         delphiClass.MakeClass()
                     return delphiClass.GetClassFullName()

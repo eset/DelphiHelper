@@ -2,7 +2,7 @@
 # This module allows to store data extracted from Delphi's RTTI tables into
 # IDA's structures
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 

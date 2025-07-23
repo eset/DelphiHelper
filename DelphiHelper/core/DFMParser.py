@@ -2,7 +2,7 @@
 # This module allows to search for, parse and extract data from Delphi's DFM
 # resource
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -16,7 +16,9 @@ from DelphiHelper.core.DelphiForm import *
 from DelphiHelper.util.exception import DelphiHelperError
 
 
-def ParseDFMs() -> list[tuple[DelphiObject, list[tuple[str, int]], int]]:
+def ParseDFMs(
+        delphiVersion: int
+    ) -> list[tuple[DelphiObject, list[tuple[str, int]], int]]:
     dfmList = DFMFinder().GetDFMList()
     numOfDfms = len(dfmList)
     delphiFormList = list()
@@ -40,7 +42,11 @@ def ParseDFMs() -> list[tuple[DelphiObject, list[tuple[str, int]], int]]:
                     delphiDFM = dfmEntryParser.ParseForm()
 
                     try:
-                        delphiRTTI = DelphiClass(0, delphiDFM.GetClassName())
+                        delphiRTTI = DelphiClass(
+                            0,
+                            delphiVersion,
+                            delphiDFM.GetClassName()
+                        )
 
                         VMTAddr = delphiRTTI.GetVMTAddress()
                         if not ida_name.get_name(VMTAddr).startswith("VMT_"):

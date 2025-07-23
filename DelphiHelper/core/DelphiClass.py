@@ -2,7 +2,7 @@
 # This module implements class for storing data extracted from Delphi's VMT
 # structure
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -42,8 +42,10 @@ class DelphiClass(object):
     def __init__(
             self,
             VMT_addr: int,
+            delphiVersion: int,
             className: str = str()) -> None:
         self.__processorWordSize = GetProcessorWordSize()
+        self.__delphiVersion = delphiVersion
 
         if VMT_addr == 0:
             self.__VMTaddr = self.__GetVMTAddrByName(className)
@@ -63,16 +65,33 @@ class DelphiClass(object):
                 self.__classInfo["FullName"]
             )
 
-            self.__intfTable = IntfTable(self.__classInfo)
-            self.__initTable = InitTable(self.__classInfo, self.__fieldEnum)
+            self.__intfTable = IntfTable(
+                self.__delphiVersion,
+                self.__classInfo
+            )
+            
+            self.__initTable = InitTable(
+                self.__delphiVersion,
+                self.__classInfo,
+                self.__fieldEnum,
+            )
 
             self.__typeInfo = TypeInfo(
+                self.__delphiVersion,
                 self.__classInfo["Address"]["TypeInfo"],
                 self.__fieldEnum
             )
 
-            self.__fieldTable = FieldTable(self.__classInfo, self.__fieldEnum)
-            self.__methodTable = MethodTable(self.__classInfo)
+            self.__fieldTable = FieldTable(
+                self.__delphiVersion,
+                self.__classInfo,
+                self.__fieldEnum
+            )
+            
+            self.__methodTable = MethodTable(
+                self.__delphiVersion,
+                self.__classInfo
+            )
             self.__dynamicTable = DynamicTable(self.__classInfo)
             self.__VMTTable = VMTTable(self.__classInfo, self.__funcStruct)
         else:
@@ -292,6 +311,10 @@ class DelphiClass(object):
            parentClassAddr != 0 and \
            not ida_name.get_name(parentClassAddr).startswith("VMT_"):
             try:
-                DelphiClass(parentClassAddr).MakeClass()
+                delphiClass = DelphiClass(
+                    parentClassAddr,
+                    self.__delphiVersion
+                )
+                delphiClass.MakeClass()
             except DelphiHelperError as e:
                 print(f"[ERROR] {e.msg}")

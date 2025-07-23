@@ -1,7 +1,7 @@
 #
 # This module allows to parse Delphi's IntfTable
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -13,12 +13,16 @@ from DelphiHelper.util.ida import *
 
 class IntfTable(object):
 
-    def __init__(self, classInfo: dict[str, str | dict[str, int]]) -> None:
+    def __init__(
+            self,
+            delphiVersion: int,
+            classInfo: dict[str, str | dict[str, int]]) -> None:
         self.__tableAddr = classInfo["Address"]["IntfTable"]
         self.__classAddr = classInfo["Address"]["Class"]
         self.__tableName = classInfo["Name"]
         self.__processorWordSize = GetProcessorWordSize()
         self.__minIntfAddr = 0
+        self.__delphiVersion = delphiVersion
 
         if self.__tableAddr != 0:
             self.__intfCount = Dword(self.__tableAddr)
@@ -98,7 +102,10 @@ class IntfTable(object):
                 if ida_bytes.is_loaded(typeInfoAddr) and \
                    typeInfoAddr != 0 and \
                    "_TypeInfo" not in idc.get_name(typeInfoAddr):
-                    typeInfo = TypeInfo(typeInfoAddr + self.__processorWordSize)
+                    typeInfo = TypeInfo(
+                        self.__delphiVersion,
+                        typeInfoAddr + self.__processorWordSize
+                    )
                     typeInfo.MakeTable(1)
 
                 addr += self.__processorWordSize

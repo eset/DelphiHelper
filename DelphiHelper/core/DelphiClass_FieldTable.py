@@ -1,7 +1,7 @@
 #
 # This module allows to parse and extract data from Delphi's FieldTable
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -19,6 +19,7 @@ class FieldTable(object):
 
     def __init__(
             self,
+            delphiVersion: int,
             classInfo: dict[str, str | dict[str, int]],
             fieldEnum: FieldEnum) -> None:
         self.__tableAddr = classInfo["Address"]["FieldTable"]
@@ -28,6 +29,7 @@ class FieldTable(object):
         self.__NoNameCounter = 1
         self.__processorWordSize = GetProcessorWordSize()
         self.__classTableEntries = list()
+        self.__delphiVersion = delphiVersion
 
         if self.__tableAddr != 0:
             self.__classTableAddr = GetCustomWord(
@@ -110,7 +112,11 @@ class FieldTable(object):
             0
         )
 
-        classTable = ClassTable(self.__classTableAddr, self.__tableName)
+        classTable = ClassTable(
+            self.__classTableAddr,
+            self.__tableName,
+            self.__delphiVersion
+        )
         self.__classTableEntries = classTable.MakeTable()
 
         addr = self.__tableAddr + 2 + self.__processorWordSize
@@ -136,7 +142,10 @@ class FieldTable(object):
             if ida_bytes.is_loaded(self.__classTableEntries[index]) and \
                self.__classTableEntries[index] != 0:
                 from DelphiHelper.core.DelphiClass import DelphiClass
-                delphiClass = DelphiClass(self.__classTableEntries[index])
+                delphiClass = DelphiClass(
+                    self.__classTableEntries[index],
+                    self.__delphiVersion
+                )
                 fieldClassInfo = delphiClass.GetClassInfo()
 
                 ida_bytes.set_cmt(
@@ -222,7 +231,10 @@ class FieldTable(object):
         if addr == 0:
             typeName = "NoType"
         elif ida_bytes.is_loaded(addr):
-            typeInfo = TypeInfo(addr + self.__processorWordSize)
+            typeInfo = TypeInfo(
+                self.__delphiVersion,
+                addr + self.__processorWordSize
+            )
             typeInfo.MakeTable(1)
             typeName = typeInfo.GetTypeName()
         elif idc.get_segm_name(addr) == ".idata" and ida_name.get_name(addr).startswith("@"):

@@ -1,7 +1,7 @@
 #
 # This module allows to search for Delphi's DFM in Delphi binary
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -78,26 +78,23 @@ class DFMFinder():
                 addr = RCDATAaddr + 16
 
                 for i in range(RCDATAaddrEntryCount):
-                    if Dword(addr) & 0x80000000 != 0:
-                        strAddr = (self.__rsrcSecAddr
-                                   + (Dword(addr) & 0x7FFFFFFF))
+                    if Dword(addr) & 0x80000000 != 0 and \
+                       Dword(addr + 4) & 0x80000000 != 0:
+                        dirTableAddr = (self.__rsrcSecAddr
+                                        + (Dword(addr + 4) & 0x7FFFFFFF))
 
-                        if Dword(addr + 4) & 0x80000000 != 0:
-                            dirTableAddr = (self.__rsrcSecAddr
-                                            + (Dword(addr + 4) & 0x7FFFFFFF))
+                        if self.__GetNumberOfDirEntries(dirTableAddr) == 1:
+                            DFMDataAddr = (ida_nalt.get_imagebase()
+                                           + Dword(self.__rsrcSecAddr
+                                           + Dword(dirTableAddr + 20)))
 
-                            if self.__GetNumberOfDirEntries(dirTableAddr) == 1:
-                                DFMDataAddr = (ida_nalt.get_imagebase()
-                                               + Dword(self.__rsrcSecAddr
-                                               + Dword(dirTableAddr + 20)))
+                            DFMDataSizeAddr = (self.__rsrcSecAddr
+                                               + Dword(dirTableAddr + 20)
+                                               + 4)
+                            DFMDataSize = Dword(DFMDataSizeAddr)
 
-                                DFMDataSizeAddr = (self.__rsrcSecAddr
-                                                   + Dword(dirTableAddr + 20)
-                                                   + 4)
-                                DFMDataSize = Dword(DFMDataSizeAddr)
-
-                                if self.__CheckDFMSignature(DFMDataAddr):
-                                    self.__DFMlist.append((DFMDataAddr, DFMDataSize))
+                            if self.__CheckDFMSignature(DFMDataAddr):
+                                self.__DFMlist.append((DFMDataAddr, DFMDataSize))
                     addr += 8
             else:
                 print("[WARNING] The resource section seems to be corrupted!")

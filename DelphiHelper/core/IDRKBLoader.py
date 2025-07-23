@@ -2,7 +2,7 @@
 # This module allows to load IDR KB signatures and implements GUI for
 # IDRKBLoader
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -159,11 +159,10 @@ class IDRKBLoader(object):
             delphiVersion = GetDelphiVersion()
             ida_kernwin.hide_wait_box()
 
-        if delphiVersion != -1:
-            self.__loadSignatures(
-                self.__getKBFilePath(delphiVersion),
-                self.__unitList
-            )
+        if delphiVersion == -1:
+            delphiVersion = 2014
+
+        self.__loadSignatures(self.__getKBFilePath(delphiVersion), self.__unitList)
 
     def __isDifferentFunctionName(
             self,
@@ -199,7 +198,7 @@ class IDRKBLoader(object):
                     funcAddr = funcStruct.start_ea
                 else:
                     MakeFunction(funcAddr)
-                    print(f"[INFO] Making a new function on 0x{funcAddr:x}")
+                    print(f"[INFO] Making a new function on 0x{funcAddr:X}")
                 origFunctionName = ida_name.get_name(funcAddr)
 
                 if not self.__isDifferentFunctionName(origFunctionName, functionName):
@@ -213,7 +212,7 @@ class IDRKBLoader(object):
                 if origFunctionName.startswith("sub_") or \
                    origFunctionName.startswith("unknown_"):
                     print(
-                        f"[INFO] Renaming: {origFunctionName} -> {functionName} ({funcAddr:x})"
+                        f"[INFO] Renaming: {origFunctionName} -> {functionName} ({funcAddr:X})"
                     )
                     MakeName(funcAddr, functionName)
                 else:
@@ -223,7 +222,9 @@ class IDRKBLoader(object):
                     else:
                         cmt = functionName
 
-                    print(f"[INFO] Adding alternative name: {origFunctionName} -> {functionName} (0x{funcAddr:x})")
+                    print(
+                        f"[INFO] Adding alternative name: {origFunctionName} -> {functionName} (0x{funcAddr:X})"
+                    )
                     ida_funcs.set_func_cmt(funcAddr, cmt, 1)
                 return True
         return False

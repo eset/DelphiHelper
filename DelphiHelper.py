@@ -1,7 +1,7 @@
 #
 # IDA plugin definition
 #
-# Copyright (c) 2020-2024 ESET
+# Copyright (c) 2020-2025 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -9,11 +9,14 @@
 import ida_auto
 import ida_idaapi
 import ida_kernwin
+import idautils
 from DelphiHelper.core.ClassResolver import ResolveClass, ResolveApplicationClass
+from DelphiHelper.core.DelphiClass_TypeInfo import ParseTypeInfo
 from DelphiHelper.core.DFMParser import ParseDFMs
 from DelphiHelper.core.EPFinder import *
 from DelphiHelper.core.FormViewer import FormViewer
 from DelphiHelper.core.IDRKBLoader import *
+from DelphiHelper.core.IDRKBParser import GetDelphiVersion
 from DelphiHelper.util.delphi import LoadDelphiFLIRTSignatures
 from DelphiHelper.util.exception import DelphiHelperError
 
@@ -52,6 +55,7 @@ class DelphiHelperPluginMain(ida_idaapi.plugmod_t):
         self.__delphiFormList = list()
         self.__packageinfo = None
         self.__parseFlag = True
+        self.__delphiVersion = 0
 
         self.hotkeys = []
         self.hotkeys.append(ida_kernwin.add_hotkey("Alt+Shift+R", self.resolveClass))
@@ -99,7 +103,8 @@ class DelphiHelperPluginMain(ida_idaapi.plugmod_t):
         msg = "NODELAY\nHIDECANCEL\nSearching for EP function..."
         ida_kernwin.show_wait_box(msg)
         try:
-            EPFinder().FindEPFunction()
+            self.getDelphiVersion()
+            EPFinder(self.__delphiVersion).FindEPFunction()
         except DelphiHelperError as e:
             e.print()
         finally:
@@ -109,9 +114,10 @@ class DelphiHelperPluginMain(ida_idaapi.plugmod_t):
         msg = "NODELAY\nHIDECANCEL\nProcessing selected VMT structure..."
         ida_kernwin.show_wait_box(msg)
         try:
+            self.getDelphiVersion()
             LoadDelphiFLIRTSignatures()
             ida_auto.auto_wait()
-            ResolveClass(ida_kernwin.get_screen_ea())
+            ResolveClass(ida_kernwin.get_screen_ea(), self.__delphiVersion)
         except DelphiHelperError as e:
             e.print()
         finally:
@@ -121,18 +127,22 @@ class DelphiHelperPluginMain(ida_idaapi.plugmod_t):
         msg = "NODELAY\nHIDECANCEL\nProcessing Delphi file's DFMs..."
         ida_kernwin.show_wait_box(msg)
         try:
+            self.getDelphiVersion()
             LoadDelphiFLIRTSignatures()
             ida_auto.auto_wait()
-            ResolveApplicationClass()
+            ResolveApplicationClass(self.__delphiVersion)
 
             if self.__parseFlag:
-                self.__delphiFormList = ParseDFMs()
+                self.__delphiFormList = ParseDFMs(self.__delphiVersion)
                 self.__parseFlag = False
+
+            self.processTypeInfoStructures()
 
             if self.__delphiFormList:
                 FormViewer(self.__delphiFormList)
             else:
                 print("[INFO] The Delphi binary seems to not contain any Delphi Form")
+
         except DelphiHelperError as e:
             e.print()
         finally:
@@ -146,9 +156,30 @@ class DelphiHelperPluginMain(ida_idaapi.plugmod_t):
 
     def loadIDRKBSignatures_main(self) -> None:
         try:
-            IDRKBLoader(["SysInit", "System"]).LoadIDRKBSignatures()
+            IDRKBLoader(["SysInit", "System"]).LoadIDRKBSignatures(self.__delphiVersion)
         except DelphiHelperError as e:
             e.print()
+
+    def getDelphiVersion(self) -> None:
+        if self.__delphiVersion == 0:
+            self.__delphiVersion = GetDelphiVersion()
+
+    def processTypeInfoStructures(self) -> None:
+        msg = "NODELAY\nHIDECANCEL\nProcessing TypeInfo structures..."
+        ida_kernwin.show_wait_box(msg)
+        try:
+            self.getDelphiVersion()
+
+            for seg in idautils.Segments():
+                addr = seg + 5
+                endAddr = idc.get_segm_end(seg)
+
+                while addr != ida_idaapi.BADADDR and addr < endAddr:
+                    addr = ParseTypeInfo(addr, self.__delphiVersion)
+        except DelphiHelperError as e:
+            e.print()
+        finally:
+            ida_kernwin.hide_wait_box()
 
 
 def PLUGIN_ENTRY():
