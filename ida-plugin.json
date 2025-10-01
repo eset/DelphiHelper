@@ -1,0 +1,47 @@
+{
+  "IDAMetadataDescriptorVersion": 1,
+  "plugin": {
+    "name": "DelphiHelper",
+    "entryPoint": "DelphiHelper.py",
+    "version": "1.21",
+    "idaVersions": ">=8.4",
+    "description": "Analyzes Delphi binaries with VMT parsing, form viewing, and IDR Knowledge Base integration.",
+    "license": "BSD 2-Clause",
+    "pythonDependencies": ["py7zr"],
+    "categories": [
+      "file-parsers-and-loaders",
+      "decompilation",
+      "ui-ux-and-visualization"
+    ],
+    "urls": {
+      "repository": "https://github.com/eset/DelphiHelper"
+    },
+    "authors": [
+      {
+        "name": "Juraj Horňák",
+        "email": "juraj.hornak@eset.com"
+      },
+      {
+        "name": "Tom Dupuy",
+        "email": "thomas.dupuy@eset.com"
+      }
+    ],
+    "keywords": [
+      "delphi",
+      "borland",
+      "embarcadero",
+      "rtti",
+      "vmt",
+      "virtual-method-table",
+      "dfm",
+      "form-viewer",
+      "idr",
+      "knowledge-base",
+      "pascal",
+      "object-pascal",
+      "windows-forms",
+      "vcl",
+      "rad-studio"
+    ]
+  }
+}
