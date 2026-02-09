@@ -1,7 +1,7 @@
 #
 # This module allows to parse and extract data from Delphi's VMT structures
 #
-# Copyright (c) 2020-2025 ESET
+# Copyright (c) 2020-2026 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -9,6 +9,7 @@
 import ida_idaapi
 import ida_kernwin
 import ida_name
+from DelphiHelper.core.ClassStruct import UpdateClassStructures
 from DelphiHelper.core.DelphiClass import DelphiClass
 from DelphiHelper.util.delphi import GetApplicationClassAddr
 from DelphiHelper.util.exception import DelphiHelperError
@@ -37,3 +38,4 @@ def ResolveApplicationClass(
 def ResolveClass(classAddr: int, delphiVersion: int) -> None:
     ResolveApplicationClass(delphiVersion)
     DelphiClass(classAddr, delphiVersion).MakeClass()
+    UpdateClassStructures()

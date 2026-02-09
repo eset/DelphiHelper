@@ -2,7 +2,7 @@
 # This module implements class for storing data extracted from Delphi's VMT
 # structure
 #
-# Copyright (c) 2020-2025 ESET
+# Copyright (c) 2020-2026 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -10,6 +10,7 @@
 import ida_bytes
 import ida_idaapi
 import ida_name
+from DelphiHelper.core.ClassStruct import *
 from DelphiHelper.core.DelphiClass_DynamicTable import *
 from DelphiHelper.core.DelphiClass_FieldTable import *
 from DelphiHelper.core.DelphiClass_InitTable import *
@@ -65,6 +66,11 @@ class DelphiClass(object):
                 self.__classInfo["FullName"]
             )
 
+            self.__classStruct = ClassStruct(
+                self.__classInfo["Name"],
+                self.__classInfo["FullName"]
+            )
+
             self.__intfTable = IntfTable(
                 self.__delphiVersion,
                 self.__classInfo
@@ -79,13 +85,15 @@ class DelphiClass(object):
             self.__typeInfo = TypeInfo(
                 self.__delphiVersion,
                 self.__classInfo["Address"]["TypeInfo"],
-                self.__fieldEnum
+                self.__fieldEnum,
+                self.__classStruct
             )
 
             self.__fieldTable = FieldTable(
                 self.__delphiVersion,
                 self.__classInfo,
-                self.__fieldEnum
+                self.__fieldEnum,
+                self.__classStruct
             )
             
             self.__methodTable = MethodTable(
@@ -116,6 +124,9 @@ class DelphiClass(object):
     def GetClassAddress(self) -> int:
         return self.__classInfo["Address"]["Class"]
 
+    def GetClassStruct(self) -> ClassStruct:
+        return self.__classStruct
+
     def GetMethods(self) -> list[tuple[str, int]]:
         return self.__methodTable.GetMethods()
 
@@ -125,7 +136,9 @@ class DelphiClass(object):
         self.__DeleteClassHeader()
         self.__MakeClassName()
 
-        self.__ResolveParent(self.__classInfo["Address"]["ParentClass"])
+        self.__classStruct.Create()
+        parentClassAddr = self.__classInfo["Address"]["ParentClass"]
+        self.__ResolveParent(parentClassAddr)
 
         self.__intfTable.MakeTable()
         self.__initTable.MakeTable()

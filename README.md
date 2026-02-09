@@ -116,6 +116,15 @@ pressing built-in IDA shortcut `<M>`, used for naming symbolic constants.
 
 ![Resolving a field from Field Table](img/FieldInFunc_After.PNG)
 
+In addition, entries from the Field Table are stored in an IDA structure named
+`%ObjectName%_Self`. This structure contains not only the published fields
+of the specific class, but also all fields inherited from its base classes:
+
+![Class Structure](img/ClassStruct.PNG)
+
+To map entries from the `%ObjectName%_Self` structure, use the built‑in IDA
+shortcut `<T>`.
+
 #### Virtual Method Table (VMT)
 
 The Virtual Method Table stores pointers to all virtual methods declared for a
@@ -124,8 +133,8 @@ class and its base classes:
 ![VMT table](img/VMT.PNG)
 
 The **VMT Parser** extracts pointers from the VMT and saves them into an IDA
-structure named by the parsed VMT structure. The names of structure entries
-have the following format: `%MethodName%_%MethodOffset%`:
+structure named by the parsed VMT structure (`%ObjectName%_VMT`). The names
+of structure entries have the following format: `%MethodName%_%MethodOffset%`:
 
 ![VMT table in IDA Structure](img/IDAStruct_VMT.PNG)
 

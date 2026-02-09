@@ -1,7 +1,7 @@
 #
 # This module implements simple heuristic for searching for EP functions
 #
-# Copyright (c) 2020-2025 ESET
+# Copyright (c) 2020-2026 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -13,6 +13,7 @@ import ida_ua
 import idautils
 import idc
 from DelphiHelper.core.ClassResolver import *
+from DelphiHelper.core.ClassStruct import UpdateClassStructures
 from DelphiHelper.core.DelphiClass import *
 from DelphiHelper.util.delphi import FindInitTable, GetApplicationClassAddr
 from DelphiHelper.util.exception import DelphiHelperError
@@ -87,6 +88,8 @@ class EPFinder(object):
                 ida_kernwin.jumpto(EPAddrToJmp)
         else:
             print("[INFO] EP function not found!")
+
+        UpdateClassStructures()
 
     def __getFormName(self, createFormRef: int) -> str:
         addr = createFormRef

@@ -1,7 +1,7 @@
 #
 # This module allows to parse and extract data from Delphi's FieldTable
 #
-# Copyright (c) 2020-2025 ESET
+# Copyright (c) 2020-2026 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -9,6 +9,7 @@
 import ida_bytes
 import ida_name
 import idc
+from DelphiHelper.core.ClassStruct import *
 from DelphiHelper.core.DelphiClass_ClassTable import *
 from DelphiHelper.core.DelphiClass_TypeInfo import *
 from DelphiHelper.util.ida import *
@@ -21,10 +22,12 @@ class FieldTable(object):
             self,
             delphiVersion: int,
             classInfo: dict[str, str | dict[str, int]],
-            fieldEnum: FieldEnum) -> None:
+            fieldEnum: FieldEnum,
+            classStruct: ClassStruct) -> None:
         self.__tableAddr = classInfo["Address"]["FieldTable"]
         self.__classInfo = classInfo
         self.__fieldEnum = fieldEnum
+        self.__classStruct = classStruct
         self.__tableName = classInfo["Name"]
         self.__NoNameCounter = 1
         self.__processorWordSize = GetProcessorWordSize()
@@ -90,6 +93,7 @@ class FieldTable(object):
                     tempName = name
 
                 self.__fieldEnum.AddMember(typeName, tempName, offset)
+                self.__classStruct.AddMember(typeName, tempName, offset)
                 addr = addr + recordSize
             else:
                 return
@@ -167,8 +171,18 @@ class FieldTable(object):
                     tempName,
                     offset
                 )
+                self.__classStruct.AddMember(
+                    "Unknown",
+                    tempName,
+                    offset
+                )
             else:
                 self.__fieldEnum.AddMember(
+                    fieldClassInfo["Name"],
+                    tempName,
+                    offset
+                )
+                self.__classStruct.AddMember(
                     fieldClassInfo["Name"],
                     tempName,
                     offset

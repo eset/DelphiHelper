@@ -2,52 +2,66 @@
 # This module allows to load IDR KB signatures and implements GUI for
 # IDRKBLoader
 #
-# Copyright (c) 2020-2025 ESET
+# Copyright (c) 2020-2026 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
+from __future__ import annotations
+
+import os
 
 import ida_funcs
 import ida_idaapi
 import ida_kernwin
 import ida_name
-import os
+import ida_pro
+
 from DelphiHelper.core.IDRKBParser import GetDelphiVersion, KBParser
 from DelphiHelper.util.delphi import GetUnits, ParseMangledFunctionName
 from DelphiHelper.util.exception import DelphiHelperError
 from DelphiHelper.util.ida import (
-        find_bytes, FixName, MakeFunction, MakeName, Is64bit
+    FixName,
+    Is64bit,
+    MakeFunction,
+    MakeName,
+    find_bytes,
 )
 from PyQt5 import QtGui, QtCore, QtWidgets
 
 
+_KBLoader: IDRKBLoaderDialog | None = None
+
+
 def KBLoader(custom: bool = False) -> None:
+    global _KBLoader
+
     KBFile = chooseKBFile()
-    if KBFile is not None:
-        if custom:
-            global _KBLoader
-            try:
-                _KBLoader
-            except Exception:
-                _KBLoader = IDRKBLoaderDialog(KBFile)
-            _KBLoader.Show()
-        else:
-            kbLoader = IDRKBLoader(["SysInit", "System"], KBFile)
-            kbLoader.LoadIDRKBSignatures(GetDelphiVersion())
+
+    if KBFile is None:
+        return
+
+    if custom:
+        try:
+            _KBLoader
+        except Exception:
+            _KBLoader = IDRKBLoaderDialog(KBFile)
+        _KBLoader.Show()
+    else:
+        kbLoader = IDRKBLoader(["SysInit", "System"], KBFile)
+        kbLoader.LoadIDRKBSignatures(GetDelphiVersion())
 
 
-def chooseKBFile() -> str or None:
+def chooseKBFile() -> str | None:
     question = "Do you want to choose the IDR KB file manually? (If not, KB autodetection will be performed.)"
     result = ida_kernwin.ask_yn(ida_kernwin.ASKBTN_NO, question)
-    
-    if result == ida_kernwin.ASKBTN_YES:
-        kbFilePath = ida_kernwin.ask_file(False, "*.*", "Select IDR KB file")
-    elif result == ida_kernwin.ASKBTN_NO:
-        kbFilePath = str()
-    else:
-        kbFilePath = None
 
-    return kbFilePath
+    if result == ida_kernwin.ASKBTN_YES:
+        return ida_kernwin.ask_file(False, "*.*", "Select IDR KB file")
+
+    if result == ida_kernwin.ASKBTN_NO:
+        return ""
+
+    return None
 
 
 class IDRKBLoaderDialog(ida_kernwin.PluginForm):
@@ -63,7 +77,7 @@ class IDRKBLoaderDialog(ida_kernwin.PluginForm):
         ida_kernwin.hide_wait_box()
 
         if len(unitList):
-            checkList = ChecklistDialog(
+            _ = ChecklistDialog(
                 self.__clink__,
                 self.FormToPyQtWidget(form),
                 unitList,

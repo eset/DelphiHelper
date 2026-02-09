@@ -1,7 +1,7 @@
 #
 # This module allows to parse and extract data from Delphi's TypeInfo
 #
-# Copyright (c) 2020-2025 ESET
+# Copyright (c) 2020-2026 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -9,6 +9,7 @@
 import ida_bytes
 import ida_idaapi
 import ida_name
+from DelphiHelper.core.ClassStruct import *
 from DelphiHelper.core.DelphiClass_TypeInfo_tkClass import TypeInfo_tkClass
 from DelphiHelper.core.DelphiClass_TypeInfo_tkRecord import TypeInfo_tkRecord
 from DelphiHelper.core.FieldEnum import FieldEnum
@@ -46,9 +47,11 @@ class TypeInfo(object):
             self,
             delphiVersion: int,
             addr: int = ida_idaapi.BADADDR,
-            fieldEnum: FieldEnum = None) -> None:
+            fieldEnum: FieldEnum = None,
+            classStruct: ClassStruct = None) -> None:
         self.__delphiVersion = delphiVersion
         self.__fieldEnum = fieldEnum
+        self.__classStruct = classStruct
         self.__tableAddr = addr
         self.__processorWordSize = GetProcessorWordSize()
         self.__typeName = ""
@@ -244,4 +247,7 @@ class TypeInfo(object):
     def __ExtractData(self) -> None:
         global typeKindList
         if typeKindList[self.__typeKind] == "tkClass":
-            self.__tkClass.ExtractData_TypeData(self.__fieldEnum)
+            self.__tkClass.ExtractData_TypeData(
+                self.__fieldEnum,
+                self.__classStruct
+            )

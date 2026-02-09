@@ -1,7 +1,7 @@
 #
 # This module implements simple IDA utilities
 #
-# Copyright (c) 2020-2025 ESET
+# Copyright (c) 2020-2026 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -15,7 +15,7 @@ import ida_nalt
 import ida_name
 import ida_search
 import ida_ua
-import idaapi
+import ida_pro
 import idc
 
 
@@ -24,7 +24,7 @@ def find_bytes(
         address: int = 0,
         forward_search: bool = True) -> int:
     # IDA 9.0
-    if idaapi.IDA_SDK_VERSION >= 900:
+    if ida_pro.IDA_SDK_VERSION >= 900:
         if forward_search:
             address = ida_bytes.find_bytes(search, address)
         else:
@@ -35,7 +35,7 @@ def find_bytes(
                 flags=ida_bytes.BIN_SEARCH_BACKWARD
             )
     # IDA 8.4
-    elif idaapi.IDA_SDK_VERSION == 840:
+    elif ida_pro.IDA_SDK_VERSION == 840:
         if forward_search:
             address = ida_search.find_binary(address, -1, search, 0x10, ida_search.SEARCH_DOWN)
         else:
@@ -46,6 +46,17 @@ def find_bytes(
 
     return address
 
+def GetStructComment(structID: int) -> str or None:
+    if ida_pro.IDA_SDK_VERSION >= 900:
+        return idc.get_struc_cmt(structID)
+    else:
+        return idc.get_struc_cmt(structID, 0)
+
+def GetStructMemberComment(structID: int, offset: int) -> str or None:
+    if ida_pro.IDA_SDK_VERSION >= 900:
+        return idc.get_member_cmt(structID, offset)
+    else:
+        return idc.get_member_cmt(structID, offset, False)
 
 def Is64bit() -> bool:
     return ida_ida.inf_is_64bit()

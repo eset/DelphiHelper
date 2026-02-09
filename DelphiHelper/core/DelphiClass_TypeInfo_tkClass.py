@@ -1,13 +1,14 @@
 #
 # This module allows to parse and extract data from Delphi's TypeInfo tkClass
 #
-# Copyright (c) 2020-2025 ESET
+# Copyright (c) 2020-2026 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
 
 import ida_bytes
 import ida_name
+from DelphiHelper.core.ClassStruct import *
 from DelphiHelper.core.FieldEnum import FieldEnum
 from DelphiHelper.util.ida import *
 
@@ -195,9 +196,14 @@ class TypeInfo_tkClass(object):
         ida_bytes.del_items(addr, ida_bytes.DELIT_DELNAMES, recordSize)
         return addr + recordSize
 
-    def ExtractData_TypeData(self, fieldEnum: FieldEnum) -> None:
+    def ExtractData_TypeData(
+            self,
+            fieldEnum: FieldEnum,
+            classStruct: ClassStruct) -> None:
         self.__fieldEnum = fieldEnum
-        if self.__fieldEnum is None:
+        self.__classStruct = classStruct
+
+        if self.__fieldEnum is None or self.__classStruct is None:
             return
 
         propCount = Word(self.__propDataAddr)
@@ -284,5 +290,18 @@ class TypeInfo_tkClass(object):
                         GetStr_PASCAL(nameAddr),
                         setProcEntry & mask1
                     )
+
+            if ((getProcEntry >> shiftVal) == 0xFF):
+                self.__classStruct.AddMember(
+                    typeName,
+                    GetStr_PASCAL(nameAddr),
+                    getProcEntry & mask1
+                )
+            if ((setProcEntry >> shiftVal) == 0xFF):
+                self.__classStruct.AddMember(
+                    typeName,
+                    GetStr_PASCAL(nameAddr),
+                    setProcEntry & mask1
+                )
 
         return addr + recordSize

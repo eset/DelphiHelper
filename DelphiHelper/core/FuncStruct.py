@@ -2,7 +2,7 @@
 # This module allows to store data extracted from Delphi's RTTI tables into
 # IDA's structures
 #
-# Copyright (c) 2020-2025 ESET
+# Copyright (c) 2020-2026 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -17,7 +17,7 @@ from DelphiHelper.util.ida import GetProcessorWordSize
 class FuncStruct(object):
 
     def __init__(self, funcStructName: str, funcStructComment: str) -> None:
-        self.__funcStructName = funcStructName
+        self.__funcStructName = funcStructName + "_VMT"
         self.__funcStructComment = funcStructComment
         self.__funcStructId = ida_idaapi.BADADDR
         self.__processorWordSize = GetProcessorWordSize()

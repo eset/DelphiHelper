@@ -1,7 +1,7 @@
 #
 # This module allows to parse Delphi's MethodTable
 #
-# Copyright (c) 2020-2025 ESET
+# Copyright (c) 2020-2026 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -189,11 +189,20 @@ class MethodTable(object):
                     if paramName is None:
                         paramName = "RetVal"
 
-                    funcPrototype += ("void* "
-                                      + typeName
-                                      + "_"
-                                      + paramName
-                                      + regStr)
+                    if paramName == "Self" or \
+                       idc.get_struc_id(typeName + "_Self") != ida_idaapi.BADADDR:
+                        funcPrototype += (typeName
+                                          + "_Self* "
+                                          + typeName
+                                          + "_"
+                                          + paramName
+                                          + regStr)
+                    else:
+                        funcPrototype += ("void* "
+                                          + typeName
+                                          + "_"
+                                          + paramName
+                                          + regStr)
 
                     addr = (addr + 6
                             + self.__processorWordSize

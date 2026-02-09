@@ -7,9 +7,16 @@
 
 
 import ida_bytes
+
 from DelphiHelper.core.FuncStruct import FuncStruct
 from DelphiHelper.util.delphi import DemangleFuncName
-from DelphiHelper.util.ida import *
+from DelphiHelper.util.ida import (
+    GetCustomWord,
+    GetProcessorWordSize,
+    MakeCustomWord,
+    MakeFunction,
+    MakeName,
+)
 
 
 class VMTTable(object):
@@ -18,7 +25,7 @@ class VMTTable(object):
             self,
             classInfo: dict[str, str | dict[str, int]],
             funcStruct: FuncStruct) -> None:
-        self.__tableAddr = classInfo["Address"]["VMTTable"]
+        self.__tableAddr: int = classInfo["Address"]["VMTTable"]
         self.__tableName = classInfo["Name"]
         self.__funcStruct = funcStruct
         self.__processorWordSize = GetProcessorWordSize()
@@ -45,7 +52,7 @@ class VMTTable(object):
             self.__CreateTableAndExtractData()
 
     def __CreateTableAndExtractData(self) -> None:
-        MakeName(self.__tableAddr, self.__tableName + "_VMT")
+        MakeName(self.__tableAddr, f"{self.__tableName}_VMT")
 
         offset = 0
         while self.__tableAddr + offset < self.__tableEndAddr:

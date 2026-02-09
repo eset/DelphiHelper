@@ -1,7 +1,7 @@
 #
 # IDA plugin definition
 #
-# Copyright (c) 2020-2025 ESET
+# Copyright (c) 2020-2026 ESET
 # Author: Juraj Horňák <juraj.hornak@eset.com>
 # See LICENSE file for redistribution.
 
@@ -9,11 +9,14 @@
 import ida_auto
 import ida_idaapi
 import ida_kernwin
+import ida_segment
 import idautils
+
 from DelphiHelper.core.ClassResolver import ResolveClass, ResolveApplicationClass
-from DelphiHelper.core.DelphiClass_TypeInfo import ParseTypeInfo
+from DelphiHelper.core.ClassStruct import UpdateClassStructures
 from DelphiHelper.core.DFMParser import ParseDFMs
-from DelphiHelper.core.EPFinder import *
+from DelphiHelper.core.DelphiClass_TypeInfo import ParseTypeInfo
+from DelphiHelper.core.EPFinder import EPFinder
 from DelphiHelper.core.FormViewer import FormViewer
 from DelphiHelper.core.IDRKBLoader import KBLoader
 from DelphiHelper.core.IDRKBParser import GetDelphiVersion
@@ -70,7 +73,7 @@ class DelphiHelperPluginMain(ida_idaapi.plugmod_t):
     def printHelp(self) -> None:
         print("-"*100)
         print(f"{PLUGIN_NAME} ({PLUGIN_VERSION}) by {PLUGIN_AUTHOR}")
-        print("Copyright (c) 2020-2024 ESET\n")
+        print("Copyright (c) 2020-2026 ESET\n")
         print("IDA plugin simplifying the analysis of Delphi x86/x64 binaries")
         print("\nHotkeys:")
 
@@ -138,6 +141,8 @@ class DelphiHelperPluginMain(ida_idaapi.plugmod_t):
 
             self.processTypeInfoStructures()
 
+            UpdateClassStructures()
+
             if self.__delphiFormList:
                 FormViewer(self.__delphiFormList)
             else:
@@ -170,11 +175,11 @@ class DelphiHelperPluginMain(ida_idaapi.plugmod_t):
         try:
             self.getDelphiVersion()
 
-            for seg in idautils.Segments():
-                addr = seg + 5
-                endAddr = idc.get_segm_end(seg)
+            for ea_seg_start in idautils.Segments():
+                addr = ea_seg_start + 5
+                seg = ida_segment.getseg(ea_seg_start)
 
-                while addr != ida_idaapi.BADADDR and addr < endAddr:
+                while addr != ida_idaapi.BADADDR and addr < seg.end_ea:
                     addr = ParseTypeInfo(addr, self.__delphiVersion)
         except DelphiHelperError as e:
             e.print()
