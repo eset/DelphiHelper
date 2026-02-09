@@ -7,8 +7,14 @@
 
 
 import ida_kernwin
-from PyQt5 import QtGui, QtWidgets
+import ida_pro
+
 from DelphiHelper.core.DelphiForm import DelphiObject, DelphiProperty
+
+if ida_pro.IDA_SDK_VERSION >= 920:
+    from PySide6 import QtGui, QtWidgets
+else:
+    from PyQt5 import QtGui, QtWidgets  # type: ignore[no-redef]
 
 
 class FormViewerUI():

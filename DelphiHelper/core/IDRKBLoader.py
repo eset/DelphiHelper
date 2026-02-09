@@ -26,7 +26,11 @@ from DelphiHelper.util.ida import (
     MakeName,
     find_bytes,
 )
-from PyQt5 import QtGui, QtCore, QtWidgets
+
+if ida_pro.IDA_SDK_VERSION >= 920:
+    from PySide6 import QtGui, QtCore, QtWidgets
+else:
+    from PyQt5 import QtGui, QtCore, QtWidgets  # type: ignore[no-redef]
 
 
 _KBLoader: IDRKBLoaderDialog | None = None
