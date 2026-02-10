@@ -81,7 +81,8 @@ class MethodTable(object):
             recordSize = Word(addr)
 
             MakeWord(addr)
-            MakeFunction(GetCustomWord(addr + 2, self.__processorWordSize))
+            funcAddr = GetCustomWord(addr + 2, self.__processorWordSize)
+            MakeFunction(funcAddr)
             MakeCustomWord(addr + 2, self.__processorWordSize)
             MakeStr_PASCAL(addr + 2 + self.__processorWordSize)
 
@@ -89,7 +90,20 @@ class MethodTable(object):
                     + "_"
                     + GetStr_PASCAL(addr + 2 + self.__processorWordSize))
 
-            MakeName(GetCustomWord(addr + 2, self.__processorWordSize), name)
+            MakeName(funcAddr, name)
+
+            if idc.get_struc_id(self.__tableName + "_Self") != ida_idaapi.BADADDR:
+                funcPrototype = ("void __usercall "
+                                 + name
+                                 + "("
+                                 + self.__tableName
+                                 + "_Self* "
+                                 + self.__tableName
+                                 + "_Self"
+                                 + GetParamRegister(0)
+                                 + ");")
+
+                idc.SetType(funcAddr, funcPrototype)
 
             addr = addr + recordSize
 
