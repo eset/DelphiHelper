@@ -114,6 +114,8 @@ class ClassStruct(object):
 
 
 def UpdateClassStructures() -> None:
+    visited = set()  # Track processed structures to prevent infinite recursion
+
     for struct in idautils.Structs():
         structID = struct[1]
         structName = struct[2]
@@ -123,7 +125,7 @@ def UpdateClassStructures() -> None:
            idc.get_type(idc.get_member_id(structID, 0)) == "int" and \
            structCmt is not None and \
            structCmt.startswith("VMT_"):
-            propagateBaseClassFields(structID, structName)
+            propagateBaseClassFields(structID, structName, visited)
 
     for struct in idautils.Structs():
         if struct[2].endswith("_Self"):
@@ -141,7 +143,12 @@ def fixMemberTypes(structID: int) -> None:
                 idc.SetType(memberID, memberCmt + "_Self*")
 
 
-def propagateBaseClassFields(structID: int, structName: str) -> None:
+def propagateBaseClassFields(structID: int, structName: str, visited: set) -> None:
+    # Prevent infinite recursion from circular inheritance
+    if structID in visited:
+        return
+    visited.add(structID)
+
     processorWordSize = GetProcessorWordSize()
     memberID = idc.get_member_id(structID, 0)
 
@@ -166,7 +173,7 @@ def propagateBaseClassFields(structID: int, structName: str) -> None:
 
         if parentStructID != ida_idaapi.BADADDR:
             if idc.get_type(idc.get_member_id(parentStructID, 0)) == "int":
-                propagateBaseClassFields(parentStructID, parentStructName)
+                propagateBaseClassFields(parentStructID, parentStructName, visited)
 
             for member in idautils.StructMembers(parentStructID):
                 if member[0] != 0 and not member[1].startswith("gap"):
