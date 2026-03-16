@@ -1,17 +1,16 @@
 # DelphiHelper
 
-DelphiHelper is a python IDA Pro plugin aiming to help the analysis of
-x86/x86_64 binaries written in
-[Delphi](https://www.embarcadero.com/products/delphi) programming language.
+Python IDA Pro plugin aiming to help the analysis of x86/x86_64 binaries
+written in [Delphi](https://www.embarcadero.com/products/delphi).
 
 ## Table of Contents
 
 
 ## Features
 
-* Displays an interactive tree view of Delphi's DFM (Delphi Form Modules)
+* Displays an interactive tree view of Delphi's Delphi Form Modules (DFMs)
 resource (Delphi Form description)
-* Parses Delphi's RTTI data structures
+* Parses Delphi's Run-Time Type Information (RTTI) data structures
 * Extracts useful information from Delphi's RTTI data structures
 * Extracts binary files embedded in Delphi's DFM resources
 * Searches for the Entry Point (EP) function
@@ -88,25 +87,26 @@ tables. The most interesting ones are:
 * [Virtual Method Table (VMT)](#virtual-method-table-(vmt))
 * [Method Table](#method-table)
 
-The **VMT Parser** automatically extracts data from those tables and stores it
+The [VMT Parser](#vmt-parser) automatically extracts data from those tables and stores it
 into IDA enums and structures. 
 
 #### Field Table
 
 The Field Table stores a name, a type and an offset of each published field.
-The **VMT Parser** extracts and saves all these entries for each VMT structure
-into IDA Enums:
+The [VMT Parser](#vmt-parser) extracts and saves all these entries for each VMT
+structure into IDA Enums:
 
 ![Field Table](img/FieldTable.PNG)
 
-The enums created by the **VMT Parser** have following format:
+The enums created by the [VMT Parser](#vmt-parser) have following format:
 `%ObjectName%_Fields`. The names of enum entries have this format:
 `%ObjectName%_%FieldType%_%FieldName%`:
 
 ![Field Table in IDA Enum](img/IDAEnum_FieldTable.PNG)
 
-The entries from enums created by the **VMT Parser** can be then named by
-pressing built-in IDA shortcut `<M>`, used for naming symbolic constants.
+The entries from enums created by the [VMT Parser](#vmt-parser) can be then
+named by pressing built-in IDA shortcut `<M>`, used for naming symbolic
+constants.
 
 **Before**
 
@@ -132,14 +132,16 @@ class and its base classes:
 
 ![VMT table](img/VMT.PNG)
 
-The **VMT Parser** extracts pointers from the VMT and saves them into an IDA
-structure named by the parsed VMT structure (`%ObjectName%_VMT`). The names
-of structure entries have the following format: `%MethodName%_%MethodOffset%`:
+The [VMT Parser](#vmt-parser) extracts pointers from the VMT and saves them
+into an IDA structure named by the parsed VMT structure (`%ObjectName%_VMT`).
+The names of structure entries have the following format:
+`%MethodName%_%MethodOffset%`:
 
 ![VMT table in IDA Structure](img/IDAStruct_VMT.PNG)
 
-The entries from structures created by the **VMT Parser** can be then named by
-pressing the built-in IDA shortcut `<T>`, used for naming structure offsets.
+The entries from structures created by the [VMT Parser](#vmt-parser) can be
+then named by pressing the built-in IDA shortcut `<T>`, used for naming
+structure offsets.
 
 **Before**
 
@@ -164,10 +166,10 @@ Finder](#dfm-finder))
 **Hotkey**: `<Alt-Shift-F`
 
 The **DFM Finder** tries to find all DFMs stored in a resource section of the
-analyzed Delphi binary and after that it runs the **VMT Parser** on all VMT
-structures associated with found DMFs. After all VMT structures are processed,
-a new interactive IDA subview (**Delphi Form Viewer**) is displayed. The
-subview shows a tree view of Delphi Form descriptions extracted from DFM:
+analyzed Delphi binary and after that it runs the [VMT Parser](#vmt-parser) on
+all VMT structures associated with found DMFs. After all VMT structures are
+processed, a new interactive IDA subview (**Delphi Form Viewer**) is displayed.
+The subview shows a tree view of Delphi Form descriptions extracted from DFM:
 
 ![Delphi Form Viewer](img/DelphiFormViewer.PNG)
 
