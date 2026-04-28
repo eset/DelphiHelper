@@ -32,24 +32,15 @@ if ida_pro.IDA_SDK_VERSION >= 920:
 else:
     from PyQt5 import QtGui, QtCore, QtWidgets  # type: ignore[no-redef]
 
-
-_KBLoader: IDRKBLoaderDialog | None = None
-
-
 def KBLoader(custom: bool = False) -> None:
-    global _KBLoader
-
     KBFile = chooseKBFile()
 
     if KBFile is None:
         return
 
     if custom:
-        try:
-            _KBLoader
-        except Exception:
-            _KBLoader = IDRKBLoaderDialog(KBFile)
-        _KBLoader.Show()
+        kbLoader_dialog = IDRKBLoaderDialog(KBFile)
+        kbLoader_dialog.Show()
     else:
         kbLoader = IDRKBLoader(["SysInit", "System"], KBFile)
         kbLoader.LoadIDRKBSignatures(GetDelphiVersion())
@@ -87,10 +78,6 @@ class IDRKBLoaderDialog(ida_kernwin.PluginForm):
                 unitList,
                 self.__KBFile
             )
-
-    def OnClose(self, form) -> None:
-        global _KBLoader
-        del _KBLoader
 
     def Show(self):
         return ida_kernwin.plgform_show(
