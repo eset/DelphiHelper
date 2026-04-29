@@ -25,7 +25,7 @@ from DelphiHelper.util.exception import DelphiHelperError
 
 
 PLUGIN_NAME = "DelphiHelper"
-PLUGIN_VERSION = "1.23"
+PLUGIN_VERSION = "1.24"
 PLUGIN_AUTHOR = "Juraj Hornak (juraj.hornak@eset.com)"
 
 
