@@ -101,6 +101,36 @@ class KBParser(object):
         self.__kbMem = self.__kbFile.read()
         self.__kbFile.close()
 
+        self.__BuildModuleIndex()
+
+    def __ReadModuleNameAt(self, off: int) -> tuple[int, str]:
+        modID = struct.unpack("H", self.__kbMem[off: off + 2])[0]
+        nameLen = struct.unpack("H", self.__kbMem[off + 2: off + 4])[0]
+        name = self.__kbMem[off + 4: off + 4 + nameLen].decode("utf-8", "replace")
+        return modID, name
+
+    def __BuildModuleIndex(self) -> None:
+        """Case-insensitive, namespace-tolerant module name -> ModuleID map."""
+        self.__moduleIndex = dict()
+
+        # pass 1: exact (lowercased) names always win
+        for mo in self.__moduleOffsets:
+            modID, name = self.__ReadModuleNameAt(mo[0])
+            self.__moduleIndex[name.lower()] = modID
+
+        # pass 2: unqualified aliases, e.g. "System.SysUtils" -> "sysutils"
+        for mo in self.__moduleOffsets:
+            modID, name = self.__ReadModuleNameAt(mo[0])
+            if "." in name:
+                self.__moduleIndex.setdefault(name.rsplit(".", 1)[-1].lower(), modID)
+
+    def GetModuleNames(self) -> list[str]:
+        """Every module actually present in the KB file."""
+        return sorted(
+            (self.__ReadModuleNameAt(mo[0])[1] for mo in self.__moduleOffsets),
+            key=str.lower,
+        )
+
     def __ReadOffetsInfo(self) -> list:
         offsetsInfo = list()
         offsetsInfo.append(struct.unpack("I", self.__kbFile.read(4))[0])
@@ -161,26 +191,14 @@ class KBParser(object):
         if moduleName == "" or self.__moduleCount == 0:
             return -1
 
-        L = 0
-        R = self.__moduleCount - 1
+        key = moduleName.lower()
 
-        while L < R:
-            M = (L + R) // 2
-            ID = self.__moduleOffsets[M][3]  # NameID
-            nameLen = struct.unpack("H", self.__kbMem[self.__moduleOffsets[ID][0] + 2: self.__moduleOffsets[ID][0] + 4])[0]
-            name = self.__kbMem[self.__moduleOffsets[ID][0] + 4: self.__moduleOffsets[ID][0] + 4 + nameLen].decode("utf-8")
+        if key in self.__moduleIndex:
+            return self.__moduleIndex[key]
 
-            if moduleName.lower() <= name.lower():
-                R = M
-            else:
-                L = M + 1
-
-        ID = self.__moduleOffsets[R][3]
-        nameLen = struct.unpack("H", self.__kbMem[self.__moduleOffsets[ID][0] + 2: self.__moduleOffsets[ID][0] + 4])[0]
-        name = self.__kbMem[self.__moduleOffsets[ID][0] + 4: self.__moduleOffsets[ID][0] + 4 + nameLen].decode("utf-8")
-
-        if moduleName == name:
-            return struct.unpack("H", self.__kbMem[self.__moduleOffsets[ID][0]: self.__moduleOffsets[ID][0] + 2])[0]
+        # binary reports "System.SysUtils", KB stores "SysUtils" (or vice versa)
+        if "." in key:
+            return self.__moduleIndex.get(key.rsplit(".", 1)[-1], -1)
 
         return -1
 

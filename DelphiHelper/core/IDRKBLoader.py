@@ -68,15 +68,39 @@ class IDRKBLoaderDialog(ida_kernwin.PluginForm):
     def OnCreate(self, form) -> None:
         msg = "NODELAY\nHIDECANCEL\nExtracting list of imported units..."
         ida_kernwin.show_wait_box(msg)
-        unitList = sorted(GetUnits())
+        detected = set(GetUnits())
         ida_kernwin.hide_wait_box()
+
+        # Resolve the KB path now so we can enumerate what it really contains.
+        kbPath = self.__KBFile
+        kbUnits = set()
+
+        try:
+            if not kbPath:
+                version = GetDelphiVersion()
+                if version in (0, -1):
+                    version = 2014
+                kbPath = ResolveKBFilePath(version)
+
+            kbUnits = set(KBParser(kbPath).GetModuleNames())
+        except DelphiHelperError as e:
+            e.print()
+
+        unitList = sorted(detected | kbUnits, key=str.lower)
+
+        print(
+            f"[INFO] Units from binary: {len(detected)}, "
+            f"modules in KB: {len(kbUnits)}, selectable: {len(unitList)}"
+        )
 
         if len(unitList):
             _ = ChecklistDialog(
                 self.__clink__,
                 self.FormToPyQtWidget(form),
                 unitList,
-                self.__KBFile
+                kbPath,
+                checked=False,
+                preChecked=detected
             )
 
     def Show(self):
@@ -96,8 +120,11 @@ class ChecklistDialog(QtWidgets.QDialog):
             parent,
             unitList: list[str],
             KBFile: str,
-            checked: bool = True) -> None:
+            checked: bool = True,
+            preChecked: set[str] | None = None) -> None:
         super(ChecklistDialog, self).__init__(parent)
+
+        preCheckedLower = {u.lower() for u in (preChecked or set())}
 
         self.__KBFile = KBFile
         self.clink = clink
@@ -111,7 +138,7 @@ class ChecklistDialog(QtWidgets.QDialog):
             item.setCheckable(True)
             item.setEditable(False)
 
-            if checked:
+            if checked or unit.lower() in preCheckedLower:
                 item.setCheckState(QtCore.Qt.Checked)
             else:
                 item.setCheckState(QtCore.Qt.Unchecked)
@@ -176,6 +203,28 @@ class ChecklistDialog(QtWidgets.QDialog):
         for i in range(self.model.rowCount()):
             item = self.model.item(i)
             item.setCheckState(QtCore.Qt.Unchecked)
+
+
+def ResolveKBFilePath(delphiVersion: int) -> str:
+    if Is64bit():
+        KBPath = os.path.join(
+            os.path.dirname(__file__), "..", "IDR_KB", "IDR64",
+            f"syskb{delphiVersion}.bin"
+        )
+    else:
+        KBPath = os.path.join(
+            os.path.dirname(__file__), "..", "IDR_KB", "IDR",
+            f"kb{delphiVersion}.bin"
+        )
+    KBPath = os.path.normpath(KBPath)
+
+    if not os.path.exists(KBPath):
+        print(f"[WARNING] KB file \"{KBPath}\" not found!")
+        msg = f"KB file \"{KBPath}\" not found!\nNote: read the README.md for KB file location."
+        ida_kernwin.warning(msg)
+        raise DelphiHelperError()
+
+    return KBPath
 
 
 class IDRKBLoader(object):
@@ -267,33 +316,7 @@ class IDRKBLoader(object):
         return False
 
     def __getKBFilePath(self, delphiVersion: int) -> str:
-        if Is64bit():
-            KBPath = os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "IDR_KB",
-                "IDR64",
-                f"syskb{delphiVersion}.bin"
-            )
-        else:
-            KBPath = os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "IDR_KB",
-                "IDR",
-                f"kb{delphiVersion}.bin"
-            )
-        KBPath = os.path.normpath(KBPath)
-
-        if not os.path.exists(KBPath):
-            print(f"[WARNING] KB file \"{KBPath}\" not found!")
-
-            msg = f"KB file \"{KBPath}\" not found!\nNote: read the README.md for KB file location."
-            ida_kernwin.warning(msg)
-
-            raise DelphiHelperError()
-
-        return KBPath
+        return ResolveKBFilePath(delphiVersion)
 
     def __loadSignatures(
             self,
