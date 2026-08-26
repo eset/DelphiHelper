@@ -1,9 +1,10 @@
 {
+  "$schema": "https://hcli.docs.hex-rays.com/schemas/ida-plugin.json",
   "IDAMetadataDescriptorVersion": 1,
   "plugin": {
     "name": "DelphiHelper",
     "entryPoint": "DelphiHelper.py",
-    "version": "1.24",
+    "version": "1.25",
     "idaVersions": ">=8.4",
     "description": "Analyzes Delphi binaries with VMT parsing, form viewing, and IDR Knowledge Base integration.",
     "license": "BSD 2-Clause",
