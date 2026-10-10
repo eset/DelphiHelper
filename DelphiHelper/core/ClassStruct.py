@@ -157,6 +157,10 @@ def propagateBaseClassFields(structID: int, structName: str, visited: set) -> No
         return
 
     classAddr = idc.get_name_ea_simple(structCmt)
+    if classAddr == ida_idaapi.BADADDR:
+        idc.SetType(memberID, "void*")
+        return
+
     parentClassAddr = GetCustomWord(
         classAddr + 10 * processorWordSize,
         processorWordSize
