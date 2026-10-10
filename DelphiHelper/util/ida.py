@@ -46,13 +46,13 @@ def find_bytes(
 
     return address
 
-def GetStructComment(structID: int) -> str or None:
+def GetStructComment(structID: int) -> str | None:
     if ida_pro.IDA_SDK_VERSION >= 900:
         return idc.get_struc_cmt(structID)
     else:
         return idc.get_struc_cmt(structID, 0)
 
-def GetStructMemberComment(structID: int, offset: int) -> str or None:
+def GetStructMemberComment(structID: int, offset: int) -> str | None:
     if ida_pro.IDA_SDK_VERSION >= 900:
         return idc.get_member_cmt(structID, offset)
     else:
