@@ -4,7 +4,7 @@
   "plugin": {
     "name": "DelphiHelper",
     "entryPoint": "DelphiHelper.py",
-    "version": "1.25",
+    "version": "1.26",
     "idaVersions": ">=8.4",
     "description": "Analyzes Delphi binaries with VMT parsing, form viewing, and IDR Knowledge Base integration.",
     "license": "BSD 2-Clause",
